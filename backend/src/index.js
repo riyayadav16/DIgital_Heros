@@ -29,7 +29,7 @@ app.use(helmet({
       connectSrc: [
   "'self'",
   "http://localhost:5000",
-  "https://digital-heros-wb8w.onrender.com",
+  "'https://d-igital-heros-git-main-riya18.vercel.app'",
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
 ],
     },
