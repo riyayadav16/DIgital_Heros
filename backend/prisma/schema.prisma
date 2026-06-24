@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  role        Role     @default(USER)
+  charityId   String?
+  donationPct Int      @default(10)
+  resetToken  String?
+  resetExpiry DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  charity      Charity?      @relation(fields: [charityId], references: [id])
+  subscription Subscription?
+  scores       Score[]
+  winners      Winner[]
+  transactions Transaction[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Subscription {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  planType    PlanType
+  status      SubStatus @default(ACTIVE)
+  amount      Float
+  renewalDate DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum PlanType {
+  MONTHLY
+  YEARLY
+}
+
+enum SubStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}
+
+model Score {
+  id        String   @id @default(uuid())
+  userId    String
+  score     Int
+  date      DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}
+
+model Charity {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  logoUrl     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users User[]
+}
+
+model Draw {
+  id               String     @id @default(uuid())
+  month            Int
+  year             Int
+  numbers          Int[]
+  status           DrawStatus @default(DRAFT)
+  jackpotCarryover Float      @default(0)
+  totalPool        Float      @default(0)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  winners Winner[]
+
+  @@unique([month, year])
+}
+
+enum DrawStatus {
+  DRAFT
+  SIMULATED
+  PUBLISHED
+}
+
+model Winner {
+  id                 String             @id @default(uuid())
+  drawId             String
+  userId             String
+  tier               Int
+  matchedNumbers     Int[]
+  prizeAmount        Float
+  proofUrl           String?
+  verificationStatus VerificationStatus @default(PENDING)
+  payoutStatus       PayoutStatus       @default(PENDING)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  draw Draw @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PAID
+}
+
+model Transaction {
+  id        String          @id @default(uuid())
+  userId    String
+  amount    Float
+  type      TransactionType
+  note      String?
+  createdAt DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum TransactionType {
+  SUBSCRIPTION
+  PRIZE
+  CHARITY
+}
