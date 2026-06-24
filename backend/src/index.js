@@ -26,7 +26,12 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
       scriptSrc: ["'self'"],
-      connectSrc: ["'self'", "http://localhost:5000", ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])],
+      connectSrc: [
+  "'self'",
+  "http://localhost:5000",
+  "https://digital-heros-wb8w.onrender.com",
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+],
     },
   },
   hsts: {

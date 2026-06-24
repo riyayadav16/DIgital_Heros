@@ -90,7 +90,7 @@ export default function AdminWinners() {
                   {/* Proof */}
                   <div className="text-xs">
                     {w.proofUrl ? (
-                      <a href={`http://localhost:5000${w.proofUrl}`} target="_blank" rel="noreferrer"
+                    <a href={`${import.meta.env.VITE_API_URL.replace('/api', '')}${w.proofUrl}`}
                         className="text-primary-400 hover:text-primary-300 underline">View Proof</a>
                     ) : (
                       <span className="text-white/30">No proof uploaded</span>
