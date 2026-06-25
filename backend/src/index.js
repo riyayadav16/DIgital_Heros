@@ -1,8 +1,7 @@
 require('dotenv').config();
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-  console.error('[Startup] FATAL: JWT_SECRET must be at least 32 characters long');
-  process.exit(1);
+  console.warn('[Startup] WARNING: JWT_SECRET is missing or too short (min 32 chars). Authentication endpoints will fail until this is configured.');
 }
 
 const express = require('express');
@@ -29,7 +28,7 @@ app.use(helmet({
       connectSrc: [
   "'self'",
   "http://localhost:5000",
-  "'https://d-igital-heros-git-main-riya18.vercel.app'",
+  "https://d-igital-heros-git-main-riya18.vercel.app",
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
 ],
     },
@@ -74,12 +73,26 @@ app.use((req, res, next) => {
 });
 app.use('/uploads', express.static(path.join(__dirname, '..', uploadDir)));
 
-app.use('/api/auth', authLimiter, require('./routes/auth.routes'));
-app.use('/api/scores', apiLimiter, require('./routes/score.routes'));
-app.use('/api/subscriptions', apiLimiter, require('./routes/subscription.routes'));
-app.use('/api/draws', apiLimiter, require('./routes/draw.routes'));
-app.use('/api/admin', apiLimiter, require('./routes/admin.routes'));
-app.use('/api/charities', apiLimiter, require('./routes/charity.routes'));
+const routeFiles = [
+  { path: '/api/auth', limiter: authLimiter, file: './routes/auth.routes', name: 'Auth' },
+  { path: '/api/scores', limiter: apiLimiter, file: './routes/score.routes', name: 'Scores' },
+  { path: '/api/subscriptions', limiter: apiLimiter, file: './routes/subscription.routes', name: 'Subscriptions' },
+  { path: '/api/draws', limiter: apiLimiter, file: './routes/draw.routes', name: 'Draws' },
+  { path: '/api/admin', limiter: apiLimiter, file: './routes/admin.routes', name: 'Admin' },
+  { path: '/api/charities', limiter: apiLimiter, file: './routes/charity.routes', name: 'Charities' },
+];
+
+console.log('[Startup] Registering routes...');
+for (const r of routeFiles) {
+  try {
+    const router = require(r.file);
+    app.use(r.path, r.limiter, router);
+    console.log(`[Routes] Mounted ${r.name} at ${r.path}`);
+  } catch (err) {
+    console.error(`[Routes] FAILED to mount ${r.name} at ${r.path}: ${err.message}`);
+  }
+}
+console.log('[Startup] Route registration complete');
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } }));

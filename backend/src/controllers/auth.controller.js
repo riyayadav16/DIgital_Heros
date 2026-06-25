@@ -6,6 +6,10 @@ const { checkSubscriptionStatus } = require('../utils/subscription');
 
 const signup = async (req, res) => {
   try {
+    if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+      return res.status(500).json({ success: false, message: 'Server misconfigured: JWT_SECRET is not set or too short' });
+    }
+
     const { name, email, password, charityId, donationPct } = req.body;
 
     if (!name || !email || !password) {
@@ -69,6 +73,10 @@ const signup = async (req, res) => {
 
 const login = async (req, res) => {
   try {
+    if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+      return res.status(500).json({ success: false, message: 'Server misconfigured: JWT_SECRET is not set or too short' });
+    }
+
     const { email, password } = req.body;
 
     if (!email || !password) {
