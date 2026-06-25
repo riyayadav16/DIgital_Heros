@@ -17,6 +17,21 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [process.env.FRONTEND_URL].filter(Boolean)
   : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'];
 
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    console.log('❌ BLOCKED CORS:', origin);
+    return callback(new Error('CORS blocked'), false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -26,11 +41,11 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https:", "http:"],
       scriptSrc: ["'self'"],
       connectSrc: [
-  "'self'",
-  "http://localhost:5000",
-  "https://d-igital-heros-git-main-riya18.vercel.app",
-  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
-],
+        "'self'",
+        "http://localhost:5000",
+        "https://digital-heros-wb8w.onrender.com",
+        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+      ],
     },
   },
   hsts: {
@@ -40,8 +55,6 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false,
 }));
-
-app.use(cors({ origin: allowedOrigins, credentials: true }));
 
 const uploadDir = process.env.UPLOAD_DIR || 'uploads';
 if (!fs.existsSync(uploadDir)) {
